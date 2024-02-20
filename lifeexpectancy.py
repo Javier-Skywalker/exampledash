@@ -19,6 +19,7 @@ df = pd.read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/
 
 # Initialize the Dash Application
 app = dash.Dash(__name__)
+server = app.server
 
 # This is where we create the layout of the dashboard.
 app.layout = html.Div([
