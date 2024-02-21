@@ -36,7 +36,7 @@ server = app.server
 app.layout = html.Div([
     html.H1("Life Expectancy Dashboard", style={"textAlign": "center"}),
 
-    # Dropdown for 'Entity' choice for the plot.
+    # Dropdown for 'Entity' choice for the first plot.
     dcc.Dropdown(
         id="entity-dropdown",
         options=[{"label": Entity, "value": Entity} for Entity in df["Entity"].unique()],
@@ -45,9 +45,10 @@ app.layout = html.Div([
         style={"width": "50%"}
     ),
 
+    # First Scatter Plot
     dcc.Graph(id="LifeExpectancy-Graph"),
 
-    # Display the three-number summary values as a table
+    # Display the three-number summary values for the first plot as a table
     dash_table.DataTable(
         id="summary-table1",
         columns=[
@@ -66,11 +67,15 @@ app.layout = html.Div([
     dcc.Dropdown(
         id="entity-dropdown2",
         options=[{"label": Entity, "value": Entity} for Entity in df["Entity"].unique()],
-        value=df["Entity"].iloc[0],
+        value=df["Entity"].iloc[1],  # Default to the second entity for comparison
         multi=False,
         style={"width": "50%"}
     ),
-    # Display the three-number summary values as a second table
+
+    # Second Scatter Plot
+    dcc.Graph(id="Comparison-Graph"),
+
+    # Display the three-number summary values for the second plot as a table
     dash_table.DataTable(
         id="summary-table2",
         columns=[
@@ -83,25 +88,25 @@ app.layout = html.Div([
 
 ])
 
-# Define callback to update the graph and summary table based on user input
+# Define callback to update the first scatter plot and summary table based on user input
 @app.callback(
     [Output("LifeExpectancy-Graph", "figure"),
      Output("summary-table1", "data")],
     [Input("entity-dropdown", "value")]
 )
-def update_graph_and_summary_table(selected_entity):
+def update_first_plot(selected_entity):
     filtered_df = df[df["Entity"] == selected_entity]
 
     # Check if the filtered DataFrame is empty
     if filtered_df.empty:
         return px.scatter(), []
 
-    # Use Plotly Express to create a scatter plot
+    # Use Plotly Express to create the first scatter plot
     fig = px.scatter(filtered_df, x="Year", y="LifeExpectancy",
                      title=f"Life Expectancy Over Years - {selected_entity}",
                      labels={"LifeExpectancy": "Life Expectancy (years)"})
 
-    # Calculate three-number summary for selected entity's LifeExpectancy
+    # Calculate three-number summary for the first plot
     life_expectancy_values = filtered_df["LifeExpectancy"].values
     year_values = filtered_df["Year"].values
 
@@ -111,23 +116,29 @@ def update_graph_and_summary_table(selected_entity):
 
 # Define callback to update the second scatter plot and its summary table based on user input
 @app.callback(
-    [Output("summary-table2", "data")],
+    [Output("Comparison-Graph", "figure"),
+     Output("summary-table2", "data")],
     [Input("entity-dropdown2", "value")]
 )
-def update_summary_table2(selected_entity):
+def update_second_plot(selected_entity):
     filtered_df = df[df["Entity"] == selected_entity]
 
     # Check if the filtered DataFrame is empty
     if filtered_df.empty:
-        return []
+        return px.scatter(), []
 
-    # Calculate three-number summary for selected entity's LifeExpectancy
+    # Use Plotly Express to create the second scatter plot
+    fig = px.scatter(filtered_df, x="Year", y="LifeExpectancy",
+                     title=f"Life Expectancy Over Years - {selected_entity} (Comparison)",
+                     labels={"LifeExpectancy": "Life Expectancy (years)"})
+
+    # Calculate three-number summary for the second plot
     life_expectancy_values = filtered_df["LifeExpectancy"].values
     year_values = filtered_df["Year"].values
 
     summary_values = calculate_three_number_summary(life_expectancy_values, year_values)
 
-    return [summary_values]
+    return fig, summary_values
 
 # Run the app and print the URL
 if __name__ == '__main__':
